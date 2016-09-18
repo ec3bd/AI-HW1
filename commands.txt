@@ -1,7 +1,13 @@
 Teach -R S = "Sam Loves Ice Cream"
+Teach -R Lawn = "The lawn has been mowed"
 Teach -L M = "Sam Eats Ice Cream"
 Teach S = true
+Teach Lawn = true
 Teach S -> M
 Learn
 List
-Parse (S&B)|(!A|C)
+Query (S&B)|(!A|C)
+Query S&!B&!C&!A
+Query !Lawn|(Lawn&S)
+Query !Lawn&(Lawn&S)
+Query Lawn&S

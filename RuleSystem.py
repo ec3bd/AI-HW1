@@ -9,6 +9,9 @@ class RuleSystem(object):
         self.rules = []
 
     def list(self):
+        p = re.compile('.*[(|&!]+.*')
+        print(p.match("Lawn&S"))
+
         print("Root Variables:")
         for k in self.vars:
             if(self.vars[k][0]):
@@ -56,19 +59,20 @@ class RuleSystem(object):
             self.rules.append((expression, var))
 
     def query(self, expression):
-        print(expression)
+        res = self.parseExpression(expression)
+        print("Query: " + expression + " is " + res)
 
     def why(self, expression):
-        print(expression)
+        print(self.parseExpression(expression))
 
     def parseExpression(self, expr):
-        p = re.compile('[\(\|&!]')
+        p = re.compile('.*[(|&!]+.*')
         paren = p.match(expr)
         if(not paren):
             if(expr in self.facts):
-                return "*T"
+                return "*True"
             else:
-                return "*F"
+                return "*False"
         stack = []
         temp = ""
         parenind = 0
@@ -78,7 +82,7 @@ class RuleSystem(object):
         for i in range(0,exprlen):
             char = expr[i]
             if((char == '|' or char =='&') and len(stack) == 0):
-                if(expr[i-1] != ')'): exprarr.append(expr[0:i])
+                if(expr[i-1] != ')'): exprarr.append(expr[lastopind+1:i])
                 exprarr.append(expr[i])
                 lastopind = i
             elif(char == '!' and len(stack) == 0):
@@ -96,6 +100,7 @@ class RuleSystem(object):
         if(expr[exprlen-1] != ')'):
             exprarr.append(expr[lastopind+1:])
 
+        print(expr)
         print(exprarr)
         length = len(exprarr)
         for i in range(0,length):
@@ -110,16 +115,16 @@ class RuleSystem(object):
 
         stringcat = ""
         for el in exprarr:
-            if(type(el) is bool):
-                if(el): stringcat += "True"
-                else: stringcat += "False"
+            if(el is "*True"): stringcat += "True"
+            elif(el is "*False"): stringcat += "False"
             else:
                 stringcat += el
-        stringcat = stringcat.replace("*T","True")
-        stringcat = stringcat.replace("*F","False")
+
         print(stringcat)
         res = eval(stringcat)
-        print(res)
-        return res
+        if(res):
+            return "*True"
+        else:
+            return "*False"
 
 
