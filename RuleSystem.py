@@ -1,4 +1,5 @@
 import sys
+import re
 
 class RuleSystem(object):
 
@@ -59,3 +60,66 @@ class RuleSystem(object):
 
     def why(self, expression):
         print(expression)
+
+    def parseExpression(self, expr):
+        p = re.compile('[\(\|&!]')
+        paren = p.match(expr)
+        if(not paren):
+            if(expr in self.facts):
+                return "*T"
+            else:
+                return "*F"
+        stack = []
+        temp = ""
+        parenind = 0
+        lastopind = 0
+        exprarr = []
+        exprlen = len(expr)
+        for i in range(0,exprlen):
+            char = expr[i]
+            if((char == '|' or char =='&') and len(stack) == 0):
+                if(expr[i-1] != ')'): exprarr.append(expr[0:i])
+                exprarr.append(expr[i])
+                lastopind = i
+            elif(char == '!' and len(stack) == 0):
+                exprarr.append(expr[i])
+                lastopind = i
+            elif(char == '('):
+                stack.append(char)
+                if(len(stack) == 1):
+                    parenind = i
+            elif(char == ')'):
+                stack.pop()
+                if(len(stack) == 0):
+                    exprarr.append(expr[parenind+1 : i])
+        #for the last subexpression if it isn't parenthesized
+        if(expr[exprlen-1] != ')'):
+            exprarr.append(expr[lastopind+1:])
+
+        print(exprarr)
+        length = len(exprarr)
+        for i in range(0,length):
+            if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
+                exprarr[i] = self.parseExpression(exprarr[i])
+            elif(exprarr[i] is '!'):
+                exprarr[i] = " not "
+            elif(exprarr[i] is '&'):
+                exprarr[i] = " and "
+            elif(exprarr[i] is '|'):
+                exprarr[i] = " or "
+
+        stringcat = ""
+        for el in exprarr:
+            if(type(el) is bool):
+                if(el): stringcat += "True"
+                else: stringcat += "False"
+            else:
+                stringcat += el
+        stringcat = stringcat.replace("*T","True")
+        stringcat = stringcat.replace("*F","False")
+        print(stringcat)
+        res = eval(stringcat)
+        print(res)
+        return res
+
+
