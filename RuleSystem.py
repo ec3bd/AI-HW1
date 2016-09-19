@@ -82,7 +82,7 @@ class RuleSystem(object):
         for i in range(0,exprlen):
             char = expr[i]
             if((char == '|' or char =='&') and len(stack) == 0):
-                if(expr[i-1] != ')'): exprarr.append(expr[lastopind+1:i])
+                if(expr[i-1] != ')'): exprarr.append(expr[lastopind+1:i])#may need additional testing
                 exprarr.append(expr[i])
                 lastopind = i
             elif(char == '!' and len(stack) == 0):
