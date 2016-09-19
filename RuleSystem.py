@@ -60,7 +60,7 @@ class RuleSystem(object):
 
     def query(self, expression):
         res = self.parseExpression(expression)
-        print("Query: " + expression + " is " + res)
+        print("Query: " + expression + " is " + str(res))
 
     def why(self, expression):
         print(self.parseExpression(expression))
@@ -70,13 +70,13 @@ class RuleSystem(object):
         paren = p.match(expr)
         if(not paren):
             if(expr in self.facts):
-                return "*True"
+                return "True"
             else:
-                return "*False"
+                return "False"
         stack = []
         temp = ""
         parenind = 0
-        lastopind = 0
+        lastopind = -1
         exprarr = []
         exprlen = len(expr)
         for i in range(0,exprlen):
@@ -118,13 +118,8 @@ class RuleSystem(object):
             if(el is "*True"): stringcat += "True"
             elif(el is "*False"): stringcat += "False"
             else:
-                stringcat += el
+                stringcat += str(el)
 
         print(stringcat)
         res = eval(stringcat)
-        if(res):
-            return "*True"
-        else:
-            return "*False"
-
-
+        return res
