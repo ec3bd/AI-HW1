@@ -10,4 +10,5 @@ Query (S&B)|(!A|C)
 Query S&!B&!C&!A
 Query !Lawn|(Lawn&S)
 Query !Lawn&(Lawn&S)
-Query Lawn&S
+Query Lawn&(S|B|!C)&!!Lawn
+Why (S&M)

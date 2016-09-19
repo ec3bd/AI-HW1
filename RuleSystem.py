@@ -9,9 +9,6 @@ class RuleSystem(object):
         self.rules = []
 
     def list(self):
-        p = re.compile('.*[(|&!]+.*')
-        print(p.match("Lawn&S"))
-
         print("Root Variables:")
         for k in self.vars:
             if(self.vars[k][0]):
@@ -29,7 +26,14 @@ class RuleSystem(object):
 
 
     def learn(self):
-        print("this is the learn function")
+        didLearn = True
+        while(didLearn):
+            didLearn = False
+            for rule in self.rules:
+                if(self.parseExpression(rule[0]) and (rule[1] not in self.facts)):
+                    self.facts.append(rule[1])
+                    didLearn = True
+
 
     # For creating variables
     # type - the -R or -L flag
@@ -64,8 +68,10 @@ class RuleSystem(object):
 
     def why(self, expression):
         print(self.parseExpression(expression))
+        self.parseExpression(expression, True)
 
-    def parseExpression(self, expr):
+
+    def parseExpression(self, expr, verbose=False):
         p = re.compile('.*[(|&!]+.*')
         paren = p.match(expr)
         if(not paren):
@@ -100,8 +106,9 @@ class RuleSystem(object):
         if(expr[exprlen-1] != ')'):
             exprarr.append(expr[lastopind+1:])
 
-        print(expr)
-        print(exprarr)
+        if verbose:
+            print(expr)
+            print(exprarr)
         length = len(exprarr)
         for i in range(0,length):
             if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
@@ -115,11 +122,8 @@ class RuleSystem(object):
 
         stringcat = ""
         for el in exprarr:
-            if(el is "*True"): stringcat += "True"
-            elif(el is "*False"): stringcat += "False"
-            else:
-                stringcat += str(el)
+            stringcat += str(el)
 
-        print(stringcat)
-        res = eval(stringcat)
-        return res
+        if verbose:
+            print(stringcat)
+        return eval(stringcat)
