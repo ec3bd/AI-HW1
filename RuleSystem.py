@@ -57,7 +57,7 @@ class RuleSystem(object):
                     self.facts.append(var)
                     self.resetLearned()
             else:
-                print("You cannot change a learned variable directly")
+                print("You cannot change a learned variable directly.")
 
     #For teaching new rules
     def teach3(self, expression, var):
