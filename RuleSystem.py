@@ -52,8 +52,10 @@ class RuleSystem(object):
             if(self.vars[var][0]):
                 if(var in self.facts and bool == "false"):
                     self.facts.remove(var)
+                    self.resetLearned()
                 elif(var not in self.facts and bool == "true"):
                     self.facts.append(var)
+                    self.resetLearned()
             else:
                 print("You cannot change a learned variable directly")
 
@@ -112,7 +114,8 @@ class RuleSystem(object):
         length = len(exprarr)
         for i in range(0,length):
             if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
-                exprarr[i] = self.parseExpression(exprarr[i])
+                if(verbose): exprarr[i] = self.parseExpression(exprarr[i], True)
+                else: exprarr[i] = self.parseExpression(exprarr[i])
             elif(exprarr[i] is '!'):
                 exprarr[i] = " not "
             elif(exprarr[i] is '&'):
@@ -127,3 +130,10 @@ class RuleSystem(object):
         if verbose:
             print(stringcat)
         return eval(stringcat)
+
+    def resetLearn(self):
+        for var in self.facts:
+            if(not self.vars[var][0]):
+                self.facts.remove(var)
+    
+
