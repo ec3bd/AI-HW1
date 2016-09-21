@@ -131,7 +131,7 @@ class RuleSystem(object):
             print(stringcat)
         return eval(stringcat)
 
-    def resetLearn(self):
+    def resetLearned(self):
         for var in self.facts:
             if(not self.vars[var][0]):
                 self.facts.remove(var)
