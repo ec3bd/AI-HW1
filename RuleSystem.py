@@ -67,6 +67,7 @@ class RuleSystem(object):
     def query(self, expression):
         res = self.parseExpression(expression)
         print("Query: " + expression + " is " + str(res))
+        return res
 
     def why(self, expression):
         print(self.parseExpression(expression))
