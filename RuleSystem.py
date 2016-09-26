@@ -136,5 +136,5 @@ class RuleSystem(object):
         for var in self.facts:
             if(not self.vars[var][0]):
                 self.facts.remove(var)
-    
+
 
