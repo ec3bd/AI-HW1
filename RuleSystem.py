@@ -68,12 +68,39 @@ class RuleSystem(object):
         res = self.parseExpression(expression)
         print("Query: " + expression + " is " + str(res))
         return res
-
+        
     def why(self, expression):
         variables = sorted(re.split('&|\||!|\(|\)',expression), key=len, reverse=True)
         while '' in variables: variables.remove('')
         result = self.parseExpression(expression)
         print(result)
+        for var in variables:
+            if self.vars[var][0]:
+                print("I KNOW THAT %s", self.vars[var][1]
+            else
+                print("I KNOW IT IS NOT TRUE THAT %s", var)
+                
+
+
+
+            #if var is root
+                #if true print "I KNOW THAT" var
+                #if false print "I KNOW IT IS NOT TRUE THAT" var
+            #else
+                #if no rule leads to this variable
+                    #print "I KNOW IT IS NOT TRUE THAT" this variable
+                #else
+                    #for each part of the preceding expression
+                        #if it is a root
+                                #if it is true
+                                    #print "BECAUSE" root "I KNOW THAT" expression
+                                #else 
+                                    #print "BECAUSE IT IS NOT TRUE THAT" root "I CANNOT PROVE" expression
+                        #else
+                            #if expression is true
+                                #print "BECAUSE" learned[arg][1] "I KNOW THAT" learned[var][1]
+                            #else
+                                #print "BECAUSE IT IS NOT TRUE THAT" learned[arg][1] "I CANOT PROVE" learned[var][1]
 
 
     def parseExpression(self, expr, verbose=False):
