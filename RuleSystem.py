@@ -70,8 +70,10 @@ class RuleSystem(object):
         return res
 
     def why(self, expression):
-        print(self.parseExpression(expression))
-        self.parseExpression(expression, True)
+        variables = sorted(re.split('&|\||!|\(|\)',expression), key=len, reverse=True)
+        while '' in variables: variables.remove('')
+        result = self.parseExpression(expression)
+        print(result)
 
 
     def parseExpression(self, expr, verbose=False):
@@ -136,5 +138,6 @@ class RuleSystem(object):
         for var in self.facts:
             if(not self.vars[var][0]):
                 self.facts.remove(var)
+
     
 
