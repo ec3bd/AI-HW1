@@ -1,12 +1,38 @@
 import sys
 import re
 
+NOT_OPERATOR = '!'
+AND_OPERATOR = '&'
+OR_OPERATOR = '|'
+precedence = {NOT_OPERATOR: 3, AND_OPERATOR: 2, OR_OPERATOR: 1,  '(': 0}
+
 class RuleSystem(object):
 
     def __init__(self):
         self.facts = []
         self.vars = dict()
         self.rules = []
+
+    def to_postfix(self, expr):
+        operators = []
+        postfix = []
+        for token in expr:
+            if token == NOT_OPERATOR or token == AND_OPERATOR or token == OR_OPERATOR:
+                while len(operators) > 0 and precedence[token] <= precedence[operators[-1]]:
+                    postfix.append(operators[-1])
+                    operators.pop()
+                operators.append(token)
+            elif token == '(':
+                operators.append('(')
+            elif token == ')':
+                while operators[-1] != '(':
+                    postfix.append(operators.pop())
+                operators.pop()
+            else:
+                postfix.append(token)
+        while len(operators) > 0:
+            postfix.append(operators.pop())
+        return postfix
 
     def list(self):
         print("Root Variables:")
@@ -70,16 +96,12 @@ class RuleSystem(object):
         return res
 
     def why(self, expression):
-        print "Why " + expression + "\n"
-        print(self.parseExpression(expression, True))
-        print "\n"
+        self.why2(self.to_postfix(expression))
         
-
 
     def parseExpression(self, expr, verbose=False):
         p = re.compile('.*[(|&!]+.*')
         paren = p.match(expr)
-        verboselist = []
         if(not paren): #if there are no connectives (single var)
             if(expr in self.facts):
                 if(verbose):
@@ -100,12 +122,14 @@ class RuleSystem(object):
         exprlen = len(expr)
         for i in range(0,exprlen):
             char = expr[i]
-            if((char == '|' or char =='&') and len(stack) == 0):
-                if(expr[i-1] != ')'): exprarr.append(expr[lastopind+1:i])#may need additional testing
-                exprarr.append(expr[i])
-                lastopind = i
+            if((char == '|' or char =='&') and len(stack) == 0): # reach an 'or' or 'and' and not in parentheses
+                if(expr[i-1] != ')'): #if you didn't just end parentheses
+                    exprarr.append(expr[lastopind+1:i]) #add non-parenthesized top level subexpressions
+                    #may need additional testing
+                exprarr.append(expr[i]) #adds the current operator
+                lastopind = i #catch the next non-parenthesized top expression
             elif(char == '!' and len(stack) == 0):
-                exprarr.append(expr[i])
+                exprarr.append(expr[i]) 
                 lastopind = i
             elif(char == '('):
                 stack.append(char)
@@ -114,7 +138,7 @@ class RuleSystem(object):
             elif(char == ')'):
                 stack.pop()
                 if(len(stack) == 0):
-                    exprarr.append(expr[parenind+1 : i])
+                    exprarr.append(expr[parenind+1 : i]) #put the full sub-expression in
         #for the last subexpression if it isn't parenthesized
         if(expr[exprlen-1] != ')'):
             exprarr.append(expr[lastopind+1:])
@@ -125,8 +149,10 @@ class RuleSystem(object):
         length = len(exprarr)
         for i in range(0,length):
             if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
-                if(verbose): exprarr[i] = self.parseExpression(exprarr[i], True)
-                else: exprarr[i] = self.parseExpression(exprarr[i])
+                if(verbose): 
+                    exprarr[i] = self.parseExpression(exprarr[i], True)
+                else: 
+                    exprarr[i] = self.parseExpression(exprarr[i])
             elif(exprarr[i] is '!'):
                 exprarr[i] = " not "
             elif(exprarr[i] is '&'):
@@ -137,15 +163,80 @@ class RuleSystem(object):
         stringcat = ""
         for el in exprarr:
             stringcat += str(el)
-            if (verbose):
-                if (el is " and "):
-                    verboselist.append("BECAUSE" + verboselist[-2] " AND " verboselist[-1])
-                    if(eval(stringcat)):
-                        
 
-        if verbose:
-            print(stringcat)
+
         return eval(stringcat)
+
+    def why2(self, postfix_expr):
+        operands = []
+        reasoning = []
+        for token in postfix_expr:
+            if token == '&':
+                v1, e1 = operands.pop()
+                v2, e2 = operands.pop()
+
+                operands.append((v1 and v2, '(%s AND %s)' % (e2, e1)))
+                if v1 and v2:
+                    reasoning.append('I THUS KNOW THAT %s AND %s' % (e2, e1))
+                else:
+                    reasoning.append('THUS I CANNOT PROVE %s AND %s' % (e2, e1))
+            elif token == '|':
+                v1, e1 = operands.pop()
+                v2, e2 = operands.pop()
+                operands.append((v1 or v2, '(%s OR %s)' % (e2, e1)))
+                if v1 or v2:
+                    reasoning.append('I THUS KNOW THAT %s OR %s' % (e2, e1))
+                else:
+                    reasoning.append('THUS I CANNOT PROVE %s OR %s' % (e2, e1))
+            elif token == '!':
+                v, e = operands.pop()
+                operands.append((not v, '(NOT %s)' % e))
+                if not v:
+                    reasoning.append('I THUS KNOW THAT NOT %s' % e)
+                else:
+                    reasoning.append('THUS I CANNOT PROVE NOT %s' % e)
+            else:
+                has_rule = False
+                truth = False
+
+                var_reasoning = []
+                var_rules = []
+
+                for lhs, postfix, rhs in rules:
+                    if rhs == token:
+                        has_rule = True
+                        expr_truth, expr_rule, expr_reasoning = why(postfix)
+                        var_reasoning = var_reasoning + expr_reasoning
+                        var_rules.append(expr_rule)
+                        truth = truth or expr_truth
+                        if truth:
+                            var_reasoning = expr_reasoning
+                            var_rules = [expr_rule]
+                            break
+
+                reasoning = reasoning + var_reasoning
+                if has_rule:
+                    operands.append((truth, variables[token]))
+                    if truth:
+                        reasoning.append('BECAUSE %s I KNOW THAT %s' % (var_rules[0], variables[token]))
+                    else:
+                        for var_rule in var_rules:
+                            reasoning.append('BECAUSE IT IS NOT TRUE THAT %s I CANNOT PROVE'
+                                             ' %s' % (var_rule, variables[token]))
+
+                else:
+                    operands.append((token in facts, variables[token]))
+                    if token in facts:
+                        reasoning.append("I KNOW THAT %s" % variables[token])
+                    else:
+                        reasoning.append("I KNOW IT IS NOT TRUE THAT %s" % variables[token])
+
+        #print(operands[-1][0], operands[-1][1], reasoning)
+        return operands[-1][0], operands[-1][1], reasoning
+
+
+
+
 
     def resetLearned(self):
         for var in self.facts:
