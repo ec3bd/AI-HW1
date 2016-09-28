@@ -148,38 +148,46 @@ class RuleSystem(object):
                 self.facts.remove(var)
 
 
-    def Why2(self, expr):
-        # Syntax: Why <EXP>
+    def Why2(self, expr, inner = False):
         variables = sorted(re.split('&|\||!|\(|\)',expr), key=len, reverse=True)
         while '' in variables: variables.remove('')
         result = self.parseExpression(expr)
-        print(result)
+        if(not inner): print(result)
         for var in variables:
             if self.vars[var][0]:  #is it a root var
                 if var in self.facts:
-                    print('I KNOW THAT %s' %(self.vars[var][1]))
+                    #print('I KNOW THAT %s' %(var))  #self.vars[var][1]
+                    self.whyStack.append('I KNOW THAT %s' %(var))
                 else:
-                    print('I KNOW IT IS NOT TRUE THAT %s' %(self.vars[var][1]))
+                    #print('I KNOW IT IS NOT TRUE THAT %s' %(var))
+                    self.whyStack.append('I KNOW IT IS NOT TRUE THAT %s' %(var))
             else:
                 rule = self.vars[var][2] # if empty then no rule led to the truth this variable has
                 if rule == "":
-                    print('I KNOW IT IS NOT TRUE THAT %s' %(self.vars[var][1]))
+                    #print('I KNOW IT IS NOT TRUE THAT %s' %(var))
+                    self.whyStack.append('I KNOW IT IS NOT TRUE THAT %s' %(var))
                 else:
                     args = sorted(re.split('&|\||!|\(|\)', self.vars[var][2]), key=len, reverse=True)
                     while '' in args: args.remove('')
                     for arg in args:
+                        statement2 = var   #self.vars[var][1]
                         if self.vars[arg][0]: #if root var
-                            statement2 = self.vars[var][1]
                             if self.parseExpression(self.vars[var][2]):
-                                print('BECAUSE %s I KNOW THAT %s' %(self.vars[arg][1], statement2))
+                                #print('BECAUSE %s I KNOW THAT %s' %(arg, statement2))
+                                self.whyStack.append('BECAUSE %s I KNOW THAT %s' %(arg, statement2))
+                                self.Why2(arg, True)
                             else:
-                                print('BECAUSE It IS NOT TRUE THAT %s I CANNOT PROVE %s' %(self.vars[arg][1], statement2))
+                               # print('BECAUSE It IS NOT TRUE THAT %s I CANNOT PROVE %s' %(arg, statement2))  #self.vars[arg][1]
+                                self.whyStack.append('BECAUSE It IS NOT TRUE THAT %s I CANNOT PROVE %s' %(arg, statement2))
                         else:
                             if self.parseExpression(self.vars[var][2]): #eval(learned[var][2]) == True:
-                                print('BECAUSE %s I KNOW THAT %s' %(self.vars[arg][1], statement2))
+                                #print('BECAUSE %s I KNOW THAT %s' %(arg, statement2))
+                                self.whyStack.append('BECAUSE %s I KNOW THAT %s' %(arg, statement2))
                             else:
-                                print('BECAUSE IT IS NOT TRUE THAT %s I CANNOT PROVE %s' %(self.vars[arg][1], statement2))
+                                #print('BECAUSE IT IS NOT TRUE THAT %s I CANNOT PROVE %s' %(arg, statement2))
+                                self.whyStack.append('BECAUSE IT IS NOT TRUE THAT %s I CANNOT PROVE %s' %(arg, statement2))
         expression = expr
+        if(expr in self.vars.keys() and self.vars[expr][0]): return
         expr_lookup = [] # avoids replace() issues
         for v in variables:
             if self.vars[v][0]: #if it is a root var
@@ -193,10 +201,18 @@ class RuleSystem(object):
         expression = expression.replace('!',' NOT ')
         expression = expression.replace('&', ' AND ')
         expression = expression.replace('|', ' OR ')
-        if result == True:
+        if not inner:
+            while len(self.whyStack) != 0:
+                print(self.whyStack.pop())
+        if result:
             print('THUS I KNOW THAT %s' %(expression))
         else:
             print('THUS I CANNOT PROVE THAT %s' %(expression))
+
+        if not inner:
+            print()
+            print()
+            print()
 
 
 

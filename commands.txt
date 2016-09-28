@@ -1,14 +1,22 @@
-Teach -R S = "Sam Loves Ice Cream"
-Teach -R Lawn = "The lawn has been mowed"
-Teach -L M = "Sam Eats Ice Cream"
-Teach S = true
-Teach Lawn = true
-Teach S -> M
+Teach -R D = "Donny doesn't turn"
+Teach -R Room = "The situation room is hype"
+Teach -R B = "Chef owns an ACC belt"
+Teach -L M = "Chef is a huge bitch"
+Teach -L T = "Chef doesn't turn"
+Teach -L S = "Sam likes Ice cream"
+Teach D = true
+Teach Room = true
+Teach B = true
+Teach B -> M
+Teach M&B -> S
+Teach M -> T
 Learn
 List
-Query (S&B)|(!A|C)
-Query S&!B&!C&!A
-Query !Lawn|(Lawn&S)
-Query !Lawn&(Lawn&S)
-Query Lawn&(S|B|!C)&!!Lawn
-Why2 (S&M)&!Lawn&(!!S)
+Query (D&B)|(!A|C)
+Query D&!B&!C&!A
+Query !Room|(Room&D)
+Query !Room&(Room&D)
+Query Room&(D|B|!M)&!!Room
+Why2 (T&M)&!Room&(!!D)
+Why2 !T|(M&D)
+Why2 M&S
