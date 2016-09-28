@@ -7,6 +7,7 @@ class RuleSystem(object):
         self.facts = []
         self.vars = dict()
         self.rules = []
+        self.whyStack = []
 
     def list(self):
         print("Root Variables:")
@@ -32,6 +33,7 @@ class RuleSystem(object):
             for rule in self.rules:
                 if(self.parseExpression(rule[0]) and (rule[1] not in self.facts)):
                     self.facts.append(rule[1])
+                    self.vars[rule[1]][2] = rule[0]
                     didLearn = True
 
 
@@ -42,9 +44,9 @@ class RuleSystem(object):
     def teach1(self, type, var, phrase):
         if(var not in self.vars):
             if(type == "-R"):
-                self.vars[var] = (True, phrase)
+                self.vars[var] = [True, phrase]
             else:
-                self.vars[var] = (False, phrase)
+                self.vars[var] = [False, phrase, ""]
 
     #For setting root variables
     def teach2(self, var, bool):
@@ -109,9 +111,18 @@ class RuleSystem(object):
         if(expr[exprlen-1] != ')'):
             exprarr.append(expr[lastopind+1:])
 
-        if verbose:
-            print(expr)
-            print(exprarr)
+        # if verbose:
+        #     print(expr)
+        #     print(exprarr)
+        #     for el in exprarr:
+        #     if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
+        #         exprarr[i] = replaceExpr(exprarr[i])
+        #     elif(exprarr[i] is '!'):
+        #         exprarr[i] = " not "
+        #     elif(exprarr[i] is '&'):
+        #         exprarr[i] = " and "
+        #     elif(exprarr[i] is '|'):
+        #         exprarr[i] = " or "
         length = len(exprarr)
         for i in range(0,length):
             if(exprarr[i] != '!' and exprarr[i] != '|' and exprarr[i] != '&'):
@@ -128,13 +139,64 @@ class RuleSystem(object):
         for el in exprarr:
             stringcat += str(el)
 
-        if verbose:
-            print(stringcat)
         return eval(stringcat)
+
 
     def resetLearned(self):
         for var in self.facts:
             if(not self.vars[var][0]):
                 self.facts.remove(var)
+
+
+    def Why2(self, expr):
+        # Syntax: Why <EXP>
+        variables = sorted(re.split('&|\||!|\(|\)',expr), key=len, reverse=True)
+        while '' in variables: variables.remove('')
+        result = self.parseExpression(expr)
+        print(result)
+        for var in variables:
+            if self.vars[var][0]:  #is it a root var
+                if var in self.facts:
+                    print('I KNOW THAT %s' %(self.vars[var][1]))
+                else:
+                    print('I KNOW IT IS NOT TRUE THAT %s' %(self.vars[var][1]))
+            else:
+                rule = self.vars[var][2] # if empty then no rule led to the truth this variable has
+                if rule == "":
+                    print('I KNOW IT IS NOT TRUE THAT %s' %(self.vars[var][1]))
+                else:
+                    args = sorted(re.split('&|\||!|\(|\)', self.vars[var][2]), key=len, reverse=True)
+                    while '' in args: args.remove('')
+                    for arg in args:
+                        if self.vars[arg][0]: #if root var
+                            statement2 = self.vars[var][1]
+                            if self.parseExpression(self.vars[var][2]):
+                                print('BECAUSE %s I KNOW THAT %s' %(self.vars[arg][1], statement2))
+                            else:
+                                print('BECAUSE It IS NOT TRUE THAT %s I CANNOT PROVE %s' %(self.vars[arg][1], statement2))
+                        else:
+                            if self.parseExpression(self.vars[var][2]): #eval(learned[var][2]) == True:
+                                print('BECAUSE %s I KNOW THAT %s' %(self.vars[arg][1], statement2))
+                            else:
+                                print('BECAUSE IT IS NOT TRUE THAT %s I CANNOT PROVE %s' %(self.vars[arg][1], statement2))
+        expression = expr
+        expr_lookup = [] # avoids replace() issues
+        for v in variables:
+            if self.vars[v][0]: #if it is a root var
+                expression = expression.replace(v,str(len(expr_lookup)))
+                expr_lookup.append(self.vars[v][1])
+            else:
+                expression = expression.replace(v,str(len(expr_lookup)))
+                expr_lookup.append(self.vars[v][1])
+        for e in reversed(range(len(expr_lookup))):
+            expression = expression.replace(str(e),expr_lookup[int(e)])
+        expression = expression.replace('!',' NOT ')
+        expression = expression.replace('&', ' AND ')
+        expression = expression.replace('|', ' OR ')
+        if result == True:
+            print('THUS I KNOW THAT %s' %(expression))
+        else:
+            print('THUS I CANNOT PROVE THAT %s' %(expression))
+
 
 

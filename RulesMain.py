@@ -27,6 +27,8 @@ def parseCommand(rs, line):
         rs.why(commandParts[1])
     elif(commandParts[0] == "Parse"):
         rs.parseExpression(commandParts[1])
+    elif(commandParts[0] == "Why2"):
+        rs.Why2(commandParts[1])
 
 if __name__ == "__main__":
     main()
